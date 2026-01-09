@@ -1,36 +1,69 @@
-// Loader
-window.onload = () => {
-  document.getElementById("loader").style.display = "none";
-};
+let students = JSON.parse(localStorage.getItem("students")) || [];
 
-// Smooth scroll
-function scrollToSection(id){
-  document.getElementById(id).scrollIntoView({behavior:"smooth"});
+const tableBody = document.getElementById("tableBody");
+const form = document.getElementById("studentForm");
+const searchInput = document.getElementById("search");
+
+function renderTable(data = students) {
+  tableBody.innerHTML = "";
+  data.forEach((s, index) => {
+    tableBody.innerHTML += `
+      <tr>
+        <td>${s.name}</td>
+        <td>${s.roll}</td>
+        <td>${s.dept}</td>
+        <td>${s.year}</td>
+        <td>${s.marks}</td>
+        <td>
+          <button onclick="deleteRecord(${index})">❌</button>
+        </td>
+      </tr>`;
+  });
 }
 
-// Counter animation
-function animateValue(id, end) {
-  let current = 0;
-  const interval = setInterval(() => {
-    current++;
-    document.getElementById(id).textContent = current;
-    if (current === end) clearInterval(interval);
-  }, 20);
-}
-
-animateValue("projectsCount", 12);
-animateValue("clientsCount", 8);
-animateValue("experienceCount", 3);
-
-// Contact form
-document.getElementById("contactForm").addEventListener("submit", e => {
+form.addEventListener("submit", e => {
   e.preventDefault();
-  alert("Message sent successfully!");
+
+  const student = {
+    name: name.value,
+    roll: roll.value,
+    dept: dept.value,
+    year: year.value,
+    marks: marks.value
+  };
+
+  students.push(student);
+  localStorage.setItem("students", JSON.stringify(students));
+  form.reset();
+  renderTable();
 });
 
-// Back to top
-const topBtn = document.getElementById("topBtn");
-window.onscroll = () => {
-  topBtn.style.display = window.scrollY > 400 ? "block" : "none";
-};
-topBtn.onclick = () => window.scrollTo({top:0,behavior:"smooth"});
+function deleteRecord(index) {
+  students.splice(index, 1);
+  localStorage.setItem("students", JSON.stringify(students));
+  renderTable();
+}
+
+searchInput.addEventListener("input", () => {
+  const value = searchInput.value.toLowerCase();
+  const filtered = students.filter(s =>
+    s.name.toLowerCase().includes(value) ||
+    s.roll.toLowerCase().includes(value)
+  );
+  renderTable(filtered);
+});
+
+function exportCSV() {
+  let csv = "Name,Roll,Department,Year,Marks\n";
+  students.forEach(s => {
+    csv += `${s.name},${s.roll},${s.dept},${s.year},${s.marks}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "students.csv";
+  link.click();
+}
+
+renderTable();
